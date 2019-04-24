@@ -1,0 +1,176 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r Allgemeines DSDS Netzwerk}
+library(igraph)
+el <- read.csv("https://raw.githubusercontent.com/Merlewalter/DSDS/master/Edge-%20und%20Nodelist%20DSDS%20-%20Edgelist%20(8).csv", header=T, as.is=T, sep=",") # liest Edgelist aus GitHub aus und weist sie einer Variablen zu
+nl <- read.csv("https://raw.githubusercontent.com/Merlewalter/DSDS/master/Edge-%20und%20Nodelist%20DSDS%20-%20Nodelist%20(11).csv", header=T, as.is=T, sep=",") # liest Nodelist aus GitHub aus und weist sie einer Variablen zu
+elties <- as.matrix(el)
+DSDS <- graph_from_data_frame(d=elties, vertices=nl, directed=TRUE)
+DSDS
+
+V(DSDS)[V(DSDS)$type != 0]$shape <- "circle"
+
+V(DSDS)[V(DSDS)$type != 1]$shape <- "square"
+
+V(DSDS)[V(DSDS)$sex == 1]$color <- "darkgrey"
+V(DSDS)[V(DSDS)$sex == 2]$color <- "darkgrey"
+
+V(DSDS)[V(DSDS)$typisierung == 4]$color <- "#FFFF00"
+V(DSDS)[V(DSDS)$typisierung == 5]$color <- "#FFFF00"
+V(DSDS)[V(DSDS)$typisierung == 6]$color <- "#FFFF00"
+V(DSDS)[V(DSDS)$typisierung == 12]$color <- "#FFFF00"
+V(DSDS)[V(DSDS)$typisierung == 7]$color <- "#00FF00"
+V(DSDS)[V(DSDS)$typisierung == 8]$color <- "#0080FF"
+V(DSDS)[V(DSDS)$typisierung == 9]$color <- "#0080FF"
+V(DSDS)[V(DSDS)$typisierung == 10]$color <- "#0101DF"
+V(DSDS)[V(DSDS)$typisierung == 14]$color <- "#BFFF00"
+V(DSDS)[V(DSDS)$typisierung == 15]$color <- "#BFFF00"
+V(DSDS)[V(DSDS)$typisierung == 11]$color <- "#FF8000"
+V(DSDS)[V(DSDS)$typisierung == 13]$color <- "#04B4AE"
+
+
+
+
+
+plot(DSDS, layout=layout_nicely, 
+     main="DSDS Netzwerk", 
+     edge.arrow.size=0.4)
+
+
+```
+
+
+
+```{r Ego Netzwerk Alexander Klaws}
+
+ak <- make_ego_graph(DSDS, order =1, nodes = V(DSDS)$name== "Alexander Klaws")
+
+plot(ak[[1]], main="Alexander Klaws")
+
+
+```
+
+
+```{r Sarah und Pietro}
+
+sl <- make_ego_graph(DSDS, order = 1, nodes = V(DSDS)$name =="Sarah Lombardi")
+
+plot(sl[[1]], main="Sarah Lombardi")
+
+pl <- make_ego_graph(DSDS, order = 1, nodes = V(DSDS)$name =="Pietro Lombardi")
+
+plot(pl[[1]], main="Pietro Lombardi")
+
+plsl <- sl[[1]] + pl[[1]]
+
+
+
+plot (plsl, layout=layout_nicely, 
+      main="Sarah und Pietro", 
+      edge.arrow.size=0.2)
+```
+
+```{r RTL Netzwerk}
+rtl <- delete_vertices (DSDS, V(DSDS)[sender != "1"])
+
+plot(rtl, main="RTL Group")
+
+```
+
+
+```{r Teilnetzwerke Dschungelcamp und Lets Dance}
+
+V(DSDS)[V(DSDS)$typisierung == 1]$frame.color = "red"
+
+d <- make_ego_graph(DSDS, order = 1, nodes = V(DSDS)$name =="Dschungelcamp")
+
+plot(d[[1]], main="Dschungelcamp")
+
+ld <- make_ego_graph(DSDS, order = 1, nodes = V(DSDS)$name =="Lets Dance")
+
+plot(ld[[1]], main="Lets Dance")
+
+```
+
+
+
+
+
+
+```{r Teilnetzwerk nach Geschlecht}
+gewinner <- delete_vertices (DSDS, V(DSDS)[typisierung != "1"])
+
+gewinner
+
+
+
+```
+
+```{r Teilnetzwerk nach Geschlecht Zweite und Dritte}
+
+zweite <- delete.vertices (DSDS, V(DSDS)[typisierung != "2"])
+dritte <- delete.vertices (DSDS, V(DSDS)[typisierung != "3"])
+
+
+
+
+```
+
+
+```{r Vergleich von Netzwerken im plot}
+# legt fest, dass die Visualisierung in einer Tabelle von 2x2 Feldern definiert werden
+par(mfrow=c(3,2), mar=c(0,0,3,2))
+
+
+# definiert unterschiedliche Algorithmen
+plot(gewinner, layout=layout_with_fr, main="Gewinner")
+plot(zweite, layout=layout_nicely, main="Zweite")
+plot(dritte, layout=layout_nicely, main="Dritte")
+
+
+
+```
+
+
+```{r Welche Formate werden am häufigsten genutzt?}
+
+V(DSDS)[V(DSDS)$sender == 99]$color <- "orange"
+
+
+form <- delete_vertices (DSDS, V(DSDS)[type ==1])
+
+
+plot(form, layout=layout_components, 
+     vertex.label=NA, 
+     main="Verschiedene Formate")
+
+```
+
+
+
+
+
+```{r Dynamische Netzwerke mit Visnetwork erstellen}
+library(visNetwork) # Library Visnetwork laden
+# wenn das Paket nicht geladen wird, müssen Sie es vorher installieren!
+
+# igraph nach VisNetwork importieren
+# s bezieht sich hier auf unser vorher erstelltes Netzwerk
+toVisNetworkData(DSDS, idToLabel = TRUE) 
+
+# degrees berechnen
+degree(DSDS) 
+
+# statische Visualisierung
+visIgraph(DSDS) 
+
+```
+
+```{r Dynamische Visualiserung mit visNetwork}
+# Visualisierung dynamisch
+visIgraph(DSDS, physics = TRUE, smooth = TRUE) # Physik hinzufügen, generiert ein dynamisches Netzwerk
+```
